@@ -1,7 +1,8 @@
 package io.github.mauricio.index
 
-sealed trait Operation
+case class Operation(
+                      operationType : OperationType,
+                      packageName : String,
+                      dependencies : Set[String] = Set.empty
+                    )
 
-object IndexOperation extends Operation
-object QueryOperation extends Operation
-object RemoveOperation extends Operation
