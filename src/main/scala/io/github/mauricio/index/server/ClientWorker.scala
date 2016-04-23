@@ -1,6 +1,6 @@
 package io.github.mauricio.index.server
 
-import java.io.{BufferedInputStream, PrintStream}
+import java.io.{BufferedInputStream, ByteArrayOutputStream, PrintStream}
 import java.net.{Socket, SocketTimeoutException}
 
 import io.github.mauricio.index.util.{Constants, Log}
@@ -23,25 +23,40 @@ class ClientWorker(socket: Socket, executor: OperationExecutor) extends Runnable
 
     try {
       val output = new PrintStream(socket.getOutputStream)
-      val input = new BufferedInputStream(socket.getInputStream)
-      val buffer = new ArrayBuffer[Byte](128)
+      val input = socket.getInputStream
+      val buffer = new ByteArrayOutputStream(128)
+      val readBuffer = new Array[Byte](128)
 
       while (isConnected && socket.isConnected) {
         try {
-          val byte = input.read().toByte
+          val readUntil = input.read(readBuffer)
 
-          if (byte == Constants.NewLine) {
-            val bytes = buffer.toArray
-            buffer.clear()
-            executor.execute(bytes) match {
-              case Success(Ok) => output.println("OK")
-              case Success(Fail) => output.println("FAIL")
-              case Failure(e) => output.println("ERROR")
+          if (!(readUntil == -1)) {
+            var index = 0
+
+            while ( index < readUntil ) {
+
+              val byte = readBuffer(index)
+
+              if (byte == Constants.NewLine) {
+                val bytes = buffer.toByteArray
+                buffer.reset()
+                executor.execute(bytes) match {
+                  case Success(Ok) => output.println("OK")
+                  case Success(Fail) => output.println("FAIL")
+                  case Failure(e) => output.println("ERROR")
+                }
+                output.flush()
+              } else {
+                buffer.write(byte)
+              }
+              index += 1
             }
-            output.flush()
+
           } else {
-            buffer.append(byte)
+            isConnected = false
           }
+
         } catch {
           case e: SocketTimeoutException => log.info("Timeout happened while trying to read, moving on")
         }
@@ -60,6 +75,7 @@ class ClientWorker(socket: Socket, executor: OperationExecutor) extends Runnable
       if (socket.isConnected) {
         socket.close()
       }
+      log.info("Socket has disconnected")
     }
 
   }

@@ -11,13 +11,10 @@ object OperationExecutor {
 
 class OperationExecutor( index : Index ) {
 
-  import OperationExecutor.log
-
   def execute( bytes : Array[Byte] ) : Try[OperationResult] = {
 
     MessageParser.parse(bytes).map {
       operation =>
-        log.info(s"Executing operation ${operation}")
         operation.operationType match {
           case IndexOperation => index.index(operation.packageName, operation.dependencies)
           case RemoveOperation => index.remove(operation.packageName)
