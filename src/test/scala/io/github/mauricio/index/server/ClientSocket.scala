@@ -18,12 +18,6 @@ class ClientSocket(val port: Int) {
   def index(name: String, dependencies: Set[String] = Set.empty): String =
     write(s"INDEX|${name}|${dependencies.mkString(",")}")
 
-  def query(name : String) : String =
-    write(s"QUERY|${name}|")
-
-  def remove(name : String) : String =
-    write(s"REMOVE|${name}|")
-
   def write(message: String): String = {
     output.write(message.getBytes(StandardCharsets.UTF_8))
     output.write(Constants.NewLine)
@@ -47,6 +41,12 @@ class ClientSocket(val port: Int) {
 
     new String(buffer.toArray, StandardCharsets.UTF_8)
   }
+
+  def query(name: String): String =
+    write(s"QUERY|${name}|")
+
+  def remove(name: String): String =
+    write(s"REMOVE|${name}|")
 
   def close(): Unit = {
     socket.close()

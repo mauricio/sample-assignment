@@ -1,15 +1,14 @@
-package io.github.mauricio.index.server
+package io.github.mauricio.index
 
 import java.nio.charset.StandardCharsets
 
-import io.github.mauricio.index.{IndexOperation, Operation, QueryOperation, RemoveOperation}
 import org.specs2.mutable.Specification
 
 import scala.util.{Success, Try}
 
 class MessageParserSpec extends Specification {
 
-  def parse(text : String) : Try[Operation] =
+  def parse(text: String): Try[Operation] =
     MessageParser.parse(text.getBytes(StandardCharsets.UTF_8))
 
   "parser" >> {

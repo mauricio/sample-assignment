@@ -3,19 +3,19 @@ package io.github.mauricio.index.server
 import java.net.{InetSocketAddress, ServerSocket, SocketTimeoutException}
 import java.util.concurrent.Executors
 
-import io.github.mauricio.index.OperationExecutor
 import io.github.mauricio.index.util.{Constants, DaemonThreadFactory, Log}
+import io.github.mauricio.index.{OperationExecutor, Server}
 
 object ThreadedServer {
   val log = Log.get[ThreadedServer]
 }
 
 class ThreadedServer(
-                      port : Int,
-                      executor : OperationExecutor,
-                      acceptTimeout : Int = Constants.ReadTimeout,
-                      readTimeout : Int = Constants.ReadTimeout
-                    ) {
+                      port: Int,
+                      executor: OperationExecutor,
+                      acceptTimeout: Int = Constants.ReadTimeout,
+                      readTimeout: Int = Constants.ReadTimeout
+                    ) extends Server {
 
   import ThreadedServer._
 
@@ -25,6 +25,9 @@ class ThreadedServer(
   private var isRunning = false
 
   def start(): Unit = {
+
+    log.info("Starting threaded server")
+
     serverSocket.bind(new InetSocketAddress(Constants.DefaultHost, port))
 
     isRunning = true
@@ -32,20 +35,20 @@ class ThreadedServer(
     pool.submit(new Runnable {
       override def run(): Unit = {
         try {
-          while ( isRunning ) {
+          while (isRunning) {
             try {
               val client = serverSocket.accept()
               client.setSoTimeout(readTimeout)
               pool.submit(new ClientWorker(client, executor))
             } catch {
-              case e : SocketTimeoutException =>
-                  log.info("Timeout while accepting, moving on")
+              case e: SocketTimeoutException =>
+                log.info("Timeout while accepting, moving on")
             }
           }
           serverSocket.close()
           pool.shutdown()
         } catch {
-          case e : Exception =>
+          case e: Exception =>
             log.error("Failed on server socket loop", e)
         }
       }
@@ -54,6 +57,7 @@ class ThreadedServer(
   }
 
   def stop(): Unit = {
+    log.info("Stopping threaded server")
     isRunning = false
   }
 

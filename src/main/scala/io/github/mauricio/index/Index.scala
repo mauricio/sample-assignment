@@ -17,8 +17,8 @@ class Index {
 
         packages.get(name) match {
           case Some(existingPackage) => {
-            val ( dependenciesToRegister, dependenciesToDeregister ) = existingPackage.diffDependencies(dependencies)
-            currentPackage.addDependents(existingPackage.allDependents.toSeq : _*)
+            val (dependenciesToRegister, dependenciesToDeregister) = existingPackage.diffDependencies(dependencies)
+            currentPackage.addDependents(existingPackage.allDependents)
             registerDependencies(name, dependenciesToRegister)
             deregisterDependencies(name, dependenciesToDeregister)
           }
@@ -41,11 +41,14 @@ class Index {
       }
     }
 
-  def remove( name : String ) : OperationResult =
+  private def withReadLock[A](f: => A): A =
+    withLock(readWriteLock.readLock(), f)
+
+  def remove(name: String): OperationResult =
     withWriteLock {
       packages.get(name) match {
         case Some(currentPackage) => {
-          if ( currentPackage.hasDependents() ) {
+          if (currentPackage.hasDependents()) {
             Fail
           } else {
             packages.remove(name)
@@ -57,13 +60,10 @@ class Index {
       }
     }
 
-  private def registerDependencies( name : String, dependencies: Set[String]): Unit =
-    foreachDependency(dependencies, _.addDependents(name))
+  private def deregisterDependencies(name: String, dependencies: Set[String]): Unit =
+    foreachDependency(dependencies, _.removeDependent(name))
 
-  private def deregisterDependencies(name : String, dependencies : Set[String]) : Unit =
-    foreachDependency(dependencies, _.removeDependents(name))
-
-  private def foreachDependency[A](dependencies : Set[String], f : Package => A ) : Unit = {
+  private def foreachDependency[A](dependencies: Set[String], f: Package => A): Unit = {
     withWriteLock {
       dependencies.foreach {
         dependency =>
@@ -71,9 +71,6 @@ class Index {
       }
     }
   }
-
-  private def withReadLock[A](f: => A): A =
-    withLock(readWriteLock.readLock(), f)
 
   private def withWriteLock[A](f: => A): A =
     withLock(readWriteLock.writeLock(), f)
@@ -86,5 +83,8 @@ class Index {
       lock.unlock()
     }
   }
+
+  private def registerDependencies(name: String, dependencies: Set[String]): Unit =
+    foreachDependency(dependencies, _.addDependent(name))
 
 }

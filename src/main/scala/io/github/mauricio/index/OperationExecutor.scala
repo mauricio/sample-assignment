@@ -1,17 +1,16 @@
 package io.github.mauricio.index
 
-import io.github.mauricio.index.server.MessageParser
 import io.github.mauricio.index.util.Log
+import io.netty.buffer.{ByteBuf, Unpooled}
 
 import scala.util.Try
 
-object OperationExecutor {
-  val log = Log.get[OperationExecutor]
-}
+class OperationExecutor(index: Index) {
 
-class OperationExecutor( index : Index ) {
+  def execute(bytes: Array[Byte]): Try[OperationResult] =
+    execute(Unpooled.wrappedBuffer(bytes))
 
-  def execute( bytes : Array[Byte] ) : Try[OperationResult] = {
+  def execute(bytes: ByteBuf): Try[OperationResult] = {
 
     MessageParser.parse(bytes).map {
       operation =>

@@ -1,12 +1,11 @@
 package io.github.mauricio.index.server
 
-import java.io.{BufferedInputStream, ByteArrayOutputStream, PrintStream}
+import java.io.{ByteArrayOutputStream, PrintStream}
 import java.net.{Socket, SocketTimeoutException}
 
 import io.github.mauricio.index.util.{Constants, Log}
 import io.github.mauricio.index.{Fail, Ok, OperationExecutor}
 
-import scala.collection.mutable.ArrayBuffer
 import scala.util.{Failure, Success}
 
 object ClientWorker {
@@ -34,7 +33,7 @@ class ClientWorker(socket: Socket, executor: OperationExecutor) extends Runnable
           if (!(readUntil == -1)) {
             var index = 0
 
-            while ( index < readUntil ) {
+            while (index < readUntil) {
 
               val byte = readBuffer(index)
 
