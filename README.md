@@ -54,7 +54,7 @@ have a full message (once `\n` happens) and then forward it to the `OperationExe
 once they get a response they write it to the socket and wait for the next message.
 
 This solution is fully functional (and could even possibly be deployed to an actual production
-environment), it's not really the most scalable solution. A thread-per-client implementation
+environment), but it's not really the most scalable solution. A thread-per-client implementation
 requires much more resources to be allocated for every connected client and these resources will
 tax both memory and the CPU unnecessarily, something that can be simply solved by using a
 non-blocking IO library, like Netty below.
@@ -71,7 +71,7 @@ design this solution if I wanted to build it for production and for a team to wo
 The main difference here between this and the threaded solution is that there is no
 thread-per-client, threads here aren't even visible for the code written, it's all managed by
 Netty itself. The concurrency model lives inside the library event loop and can be selected as
-needed by the application instead of being forced to be one or the other.
+needed by the application instead of being forced to be one or the other. By default it will go for a non-blocking IO solution that only uses threads when there is actual data to be processed, making it much more scalable and using much less resources than the threaded version.
 
 The library also offers a bit more structure, so this implementation has a separate response encoder
 and also uses a framework provided frame decoder that knows how to break the input messages on
@@ -79,8 +79,7 @@ every `\n`. It could also have a decoder that knows how to read the messages and
 simple object instead of `ByteBuf` objects but it made more sense here to just reuse the
 `OperationExecutor` for this purpose.
 
+### General considerations
 
-
-
-
-...
+Both implemetations would also benefit from a timeout from clients that are taking too long to
+produce any messages as they're mostly taking up resources and not making any useful operations.
