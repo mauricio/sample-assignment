@@ -19,3 +19,5 @@ coverageOutputHTML := true
 coverageMinimum := 80
 
 enablePlugins(JavaAppPackaging)
+
+dockerExposedPorts := Seq(8080)
